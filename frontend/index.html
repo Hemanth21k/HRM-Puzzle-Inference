@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Sudoku Solver</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>AI Sudoku Solver</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="input-group">
+                <label for="checkpoint-path">Model Checkpoint Path:</label>
+                <input type="text" id="checkpoint-path" placeholder="/app/models/sudoku-1k/step_10000.pt" value="/app/models/sudoku-1k/">
+                <small class="hint">Supports: .pt, .pth, .ckpt and other formats</small>
+            </div>
+            
+            <div class="input-group">
+                <label>Quick Select (Examples):</label>
+                <select id="model-select" class="model-dropdown">
+                    <option value="">-- Select a model --</option>
+                    <option value="/app/models/sudoku-1k/step_10000.pt">Sudoku 1K - step_10000.pt</option>
+                    <option value="/app/models/sudoku-1k/checkpoint_5000.pth">Sudoku 1K - checkpoint_5000.pth</option>
+                    <option value="/app/models/sudoku-10k/model_best.ckpt">Sudoku 10K - model_best.ckpt</option>
+                    <option value="/app/models/other-game/model.pt">Other Game - model.pt</option>
+                    <option value="custom">Custom Path...</option>
+                </select>
+                <small class="hint">Or enter custom path above</small>
+            </div>
+            
+            <div class="button-group">
+                <button id="reset-btn" class="btn">Reset Puzzle</button>
+                <button id="initialize-btn" class="btn btn-primary">Initialize Solver</button>
+                <button id="step-btn" class="btn btn-success" disabled>Solve One Step</button>
+                <button id="auto-solve-btn" class="btn btn-warning" disabled>Auto Solve</button>
+                <button id="stop-btn" class="btn btn-danger" disabled>Stop</button>
+            </div>
+            
+            <div class="status">
+                <p><strong>Status:</strong> <span id="status-text">Ready</span></p>
+                <p><strong>Step:</strong> <span id="step-count">0</span></p>
+                <p><strong>Session ID:</strong> <span id="session-id">None</span></p>
+            </div>
+        </div>
+        
+        <div class="grid-container">
+            <div id="sudoku-grid"></div>
+        </div>
+    </div>
+    
+    <script src="scripts.js"></script>
+</body>
+</html>

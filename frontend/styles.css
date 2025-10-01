@@ -1,0 +1,263 @@
+/* General Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: 0;
+    padding: 20px;
+    min-height: 100vh;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    margin-bottom: 30px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.controls {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    flex: 1;
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.grid-container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.input-group select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+    background-color: white;
+    cursor: pointer;
+}
+
+.input-group select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.input-group .hint {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #718096;
+    font-style: italic;
+}
+
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-success {
+    background: #48bb78;
+    color: white;
+}
+
+.btn-warning {
+    background: #f6ad55;
+    color: white;
+}
+
+.btn-danger {
+    background: #f56565;
+    color: white;
+}
+
+.btn:not(.btn-primary):not(.btn-success):not(.btn-warning):not(.btn-danger) {
+    background: #e2e8f0;
+    color: #333;
+}
+
+.status {
+    background: #f7fafc;
+    padding: 15px;
+    border-radius: 6px;
+    border-left: 4px solid #667eea;
+}
+
+.status p {
+    margin: 8px 0;
+    color: #4a5568;
+}
+
+.status span {
+    color: #667eea;
+    font-weight: 600;
+}
+
+/* Sudoku Grid Container */
+#sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 50px);
+    grid-template-rows: repeat(9, 50px);
+    gap: 0;
+    margin: 0 auto;
+    border: 3px solid #333;
+    width: fit-content;
+}
+
+/* Sudoku Cells */
+.sudoku-cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.sudoku-cell:not(.readonly) {
+    cursor: pointer;
+}
+
+.sudoku-cell.readonly {
+    background-color: #f7fafc;
+    color: #2d3748;
+    font-weight: 700;
+}
+
+.sudoku-cell.ai-filled {
+    background-color: #c6f6d5;
+    animation: fillAnimation 0.5s ease;
+}
+
+.sudoku-cell.changed {
+    background-color: #fef5e7;
+    animation: changeAnimation 0.5s ease;
+}
+
+@keyframes fillAnimation {
+    0% {
+        background-color: #48bb78;
+        transform: scale(1.1);
+    }
+    100% {
+        background-color: #c6f6d5;
+        transform: scale(1);
+    }
+}
+
+@keyframes changeAnimation {
+    0% {
+        background-color: #f6ad55;
+        transform: scale(1.1);
+    }
+    100% {
+        background-color: #fef5e7;
+        transform: scale(1);
+    }
+}
+
+/* Bold borders for 3x3 boxes */
+.sudoku-cell:nth-child(3n) {
+    border-right: 2px solid #333;
+}
+
+.sudoku-cell:nth-child(n+19):nth-child(-n+27),
+.sudoku-cell:nth-child(n+46):nth-child(-n+54) {
+    border-bottom: 2px solid #333;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .controls {
+        max-width: 100%;
+    }
+    
+    #sudoku-grid {
+        grid-template-columns: repeat(9, 40px);
+        grid-template-rows: repeat(9, 40px);
+    }
+    
+    .sudoku-cell {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}

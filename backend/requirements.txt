@@ -1,0 +1,16 @@
+torch
+adam-atan2
+einops
+tqdm
+coolname
+pydantic
+argdantic
+wandb
+omegaconf
+hydra-core
+huggingface_hub
+
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pyyaml==6.0.1
+python-multipart==0.0.6

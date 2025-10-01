@@ -1,0 +1,10 @@
+.git
+.gitignore
+.vscode
+.idea
+*.log
+node_modules/
+*.swp
+*.swo
+*~
+README.md
