@@ -183,26 +183,26 @@ async def health_check():
 
 @app.get("/api/models")
 async def list_available_models():
-    """List all available models in the models directory"""
+    """List all available models in the checkpoints directory"""
     try:
         import glob
         from pathlib import Path
         
-        models_dir = Path("/app/models")
-        if not models_dir.exists():
-            return {"models": [], "message": "Models directory not found"}
+        checkpoints_dir = Path("/app/checkpoints")
+        if not checkpoints_dir.exists():
+            return {"models": [], "message": "Checkpoints directory not found"}
         
         available_models = []
         
         # Search for checkpoint files
         patterns = ["*.pt", "*.pth", "*.ckpt"]
         for pattern in patterns:
-            for checkpoint_path in models_dir.rglob(pattern):
-                rel_path = checkpoint_path.relative_to(models_dir)
+            for checkpoint_path in checkpoints_dir.rglob(pattern):
+                rel_path = checkpoint_path.relative_to(checkpoints_dir)
                 game_dir = rel_path.parent
                 
                 # Check if config exists
-                config_path = models_dir / game_dir / "all_config.yaml"
+                config_path = checkpoints_dir / game_dir / "all_config.yaml"
                 has_config = config_path.exists()
                 
                 # Get file size
@@ -211,7 +211,7 @@ async def list_available_models():
                 available_models.append({
                     "game": str(game_dir),
                     "filename": checkpoint_path.name,
-                    "path": f"/app/models/{rel_path}",
+                    "path": f"/app/checkpoints/{rel_path}",
                     "size_mb": round(size_mb, 2),
                     "has_config": has_config,
                     "format": checkpoint_path.suffix

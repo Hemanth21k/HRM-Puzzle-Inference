@@ -56,17 +56,20 @@ fi
 # Check for models directory
 echo ""
 echo "Checking for model files..."
-if [ ! -d "models" ]; then
+if [ ! -d "checkpoints" ]; then
     echo -e "${YELLOW}⚠${NC} Creating models directory..."
-    mkdir -p models
-    echo "Please place your model checkpoint and config files in the 'models' directory:"
-    echo "  - models/step_XXXXX.pt (your checkpoint file)"
-    echo "  - models/all_config.yaml (configuration file)"
+    mkdir -p checkpoints/sudoku-1k
+    echo "Please organize your model files in subdirectories:"
+    echo "  - checkpoints/sudoku-1k/step_XXXXX.pt (or .pth, .ckpt, etc.)"
+    echo "  - checkpoints/sudoku-1k/all_config.yaml"
+    echo "  - checkpoints/other-game/checkpoint.pt"
+    echo "  - checkpoints/other-game/all_config.yaml"
 fi
 
-if [ ! -f "models"/*.pt ] 2>/dev/null && [ ! -f "models"/*.pth ] 2>/dev/null; then
-    echo -e "${YELLOW}⚠${NC} No checkpoint files found in models/"
-    echo "Please add your model checkpoint before starting"
+if [ -z "$(find models -type f \( -name "*.pt" -o -name "*.pth" -o -name "*.ckpt" \))" ]; then
+    echo -e "${YELLOW}⚠${NC} No checkpoint files found in checkpoints/"
+    echo "Please add your model checkpoints before starting"
+    echo "Supported formats: .pt, .pth, .ckpt"
     read -p "Do you want to continue anyway? (y/n) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then

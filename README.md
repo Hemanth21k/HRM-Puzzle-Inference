@@ -34,7 +34,7 @@ sudoku-solver/
 │   ├── index.html
 │   ├── scripts.js
 │   └── styles.css
-├── models/                    ← Organize by game/model type!
+├── checkpoints/               ← Organize by game/model type!
 │   ├── sudoku-1k/
 │   │   ├── step_10000.pt     ← Your checkpoint (any format)
 │   │   └── all_config.yaml
@@ -46,23 +46,23 @@ sudoku-solver/
 └── docker-start.sh
 ```
 
-### Step 2: Place Your Models
+### Step 2: Place Your Checkpoints
 
-Organize your models by game/type in subdirectories:
+Organize your checkpoints by game/type in subdirectories:
 
 ```bash
 # Create directory structure
-mkdir -p models/sudoku-1k
-mkdir -p models/sudoku-10k
-mkdir -p models/other-game
+mkdir -p checkpoints/sudoku-1k
+mkdir -p checkpoints/sudoku-10k
+mkdir -p checkpoints/other-game
 
-# Copy your models (supports .pt, .pth, .ckpt, and other formats)
-cp /path/to/your/checkpoint.pt models/sudoku-1k/
-cp /path/to/your/all_config.yaml models/sudoku-1k/
+# Copy your checkpoints (supports .pt, .pth, .ckpt, and other formats)
+cp /path/to/your/checkpoint.pt checkpoints/sudoku-1k/
+cp /path/to/your/all_config.yaml checkpoints/sudoku-1k/
 
 # Example for other games
-cp /path/to/other/model.pth models/other-game/
-cp /path/to/other/config.yaml models/other-game/
+cp /path/to/other/model.pth checkpoints/other-game/
+cp /path/to/other/config.yaml checkpoints/other-game/
 ```
 
 **Supported checkpoint formats:**
@@ -119,7 +119,7 @@ Once running:
 The structure supports multiple games and models:
 
 ```bash
-models/
+checkpoints/
 ├── sudoku-1k/          # Sudoku with 1k training samples
 ├── sudoku-10k/         # Sudoku with 10k training samples
 ├── chess-puzzles/      # Chess puzzles (future)

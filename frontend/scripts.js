@@ -1,8 +1,8 @@
 // API Configuration
 // Use environment-based URL detection
 const API_BASE_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:8000' 
-    : `http://${window.location.hostname}:8000`;
+    ? 'http://localhost:8010' 
+    : `http://${window.location.hostname}:8010`;
 
 // State management
 let currentSessionId = null;
