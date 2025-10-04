@@ -10,7 +10,7 @@ services:
       - "8010:8000"
     volumes:
       # Mount your model checkpoints directory
-      - ./models:/app/models:ro
+      - ./checkpoints:/app/checkpoints:ro
       # Mount your pretrain module if it's outside the backend folder
       - ./backend:/app
     environment:
