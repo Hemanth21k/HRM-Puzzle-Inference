@@ -77,12 +77,13 @@ async def initialize_solver(request: SudokuRequest):
         
         # Convert puzzle to tensor format (add 1 since model expects 1-indexed)
         puzzle_tensor = torch.tensor([[cell + 1 for cell in row] for row in request.puzzle], 
-                                    dtype=torch.long).unsqueeze(0).cuda()
+                                    dtype=torch.long).reshape(-1).unsqueeze(0).cuda()
         
         # Create batch
         batch = {
             "inputs": puzzle_tensor,
             "labels": puzzle_tensor.clone(),  # Placeholder
+            "puzzle_identifiers": torch.zeros(1, dtype=torch.long).cuda(),  # Add this line
         }
         
         # Initialize carry
@@ -124,14 +125,18 @@ async def solve_step(session_id: str):
             }
         
         with torch.inference_mode():
+            # print("batch:",session["batch"])
             carry, _, metrics, preds, all_finish = model_state.model(
                 carry=session["carry"],
                 batch=session["batch"],
                 return_keys=config.eval_save_outputs
             )
+            all_finish = all_finish.cpu().item()
             
             # Get predictions
             pred_outs = torch.argmax(preds["logits"], dim=-1)
+            print("pred outs:", pred_outs)
+            print("all finish:", all_finish)
             current_grid = (pred_outs[0].reshape(9, 9) - 1).cpu().tolist()
             
             # Update session

@@ -5,7 +5,7 @@ FROM nvcr.io/nvidia/pytorch:24.05-py3
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
-COPY . .
+# COPY . . <-- skipping for development purposes, mounted volume via docker-compose
 
 # Install system dependencies for CUDA and other tools
 RUN apt-get update && \
