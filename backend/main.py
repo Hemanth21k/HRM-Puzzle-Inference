@@ -6,8 +6,9 @@ import yaml
 import os
 import torch
 import asyncio
+import numpy as np
+from pathlib import Path
 from pretrain import PretrainConfig, init_train_state, create_dataloader
-
 app = FastAPI()
 
 # Enable CORS for frontend communication
@@ -22,10 +23,15 @@ app.add_middleware(
 # Global variables for model state
 model_state = None
 config = None
+test_data = None  # Cache test data
 
 class SudokuRequest(BaseModel):
     puzzle: List[List[int]]
     checkpoint_path: str  # Can be .pt, .pth, or any checkpoint format
+
+class GeneratePuzzleRequest(BaseModel):
+    source: str  # "random" or "test_data"
+    test_data_path: Optional[str] = None  # Path to .npy file if using test_data
 
 class SolverState(BaseModel):
     current_grid: List[List[int]]
@@ -186,6 +192,132 @@ async def health_check():
         "model_loaded": model_state is not None
     }
 
+def generate_random_sudoku():
+    """Generate a random valid Sudoku puzzle (simplified version)"""
+    # Start with a valid solved Sudoku (example base)
+    base = [
+        [5, 3, 4, 6, 7, 8, 9, 1, 2],
+        [6, 7, 2, 1, 9, 5, 3, 4, 8],
+        [1, 9, 8, 3, 4, 2, 5, 6, 7],
+        [8, 5, 9, 7, 6, 1, 4, 2, 3],
+        [4, 2, 6, 8, 5, 3, 7, 9, 1],
+        [7, 1, 3, 9, 2, 4, 8, 5, 6],
+        [9, 6, 1, 5, 3, 7, 2, 8, 4],
+        [2, 8, 7, 4, 1, 9, 6, 3, 5],
+        [3, 4, 5, 2, 8, 6, 1, 7, 9]
+    ]
+    
+    # Randomly remove numbers to create puzzle (keep 20-30 numbers)
+    import random
+    puzzle = [row[:] for row in base]
+    num_to_remove = random.randint(51, 61)  # Remove 51-61 numbers (leaving 20-30)
+    
+    positions = [(i, j) for i in range(9) for j in range(9)]
+    random.shuffle(positions)
+    
+    for i, j in positions[:num_to_remove]:
+        puzzle[i][j] = 0
+    
+    return puzzle
+
+@app.post("/api/generate_puzzle")
+async def generate_puzzle(request: GeneratePuzzleRequest):
+    """Generate a new Sudoku puzzle"""
+    try:
+        global test_data
+        
+        if request.source == "random":
+            # Generate random puzzle
+            puzzle = generate_random_sudoku()
+            return {
+                "puzzle": puzzle,
+                "source": "random",
+                "status": "success"
+            }
+        
+        elif request.source == "test_data":
+            # Load from test data .npy file
+            if not request.test_data_path:
+                raise HTTPException(status_code=400, detail="test_data_path is required when source is 'test_data'")
+            
+            test_data_path = Path(request.test_data_path)
+            if not test_data_path.exists():
+                raise HTTPException(status_code=404, detail=f"Test data file not found: {request.test_data_path}")
+            
+            # Load test data (cache it)
+            if test_data is None or not hasattr(test_data, 'path') or test_data.path != str(test_data_path):
+                test_data_array = np.load(test_data_path)
+                test_data = type('obj', (object,), {
+                    'data': test_data_array,
+                    'path': str(test_data_path)
+                })()
+            
+            # Get random sample
+            import random
+            idx = random.randint(0, len(test_data.data) - 1)
+            puzzle_array = test_data.data[idx]
+            
+            # Convert to list format (assuming it's 9x9)
+            if puzzle_array.shape == (81,):
+                puzzle = puzzle_array.reshape(9, 9).tolist()
+            elif puzzle_array.shape == (9, 9):
+                puzzle = puzzle_array.tolist()
+            else:
+                raise HTTPException(status_code=400, detail=f"Unexpected puzzle shape: {puzzle_array.shape}")
+            
+            # Convert to int and handle any special values
+            puzzle = [[int(cell) for cell in row] for row in puzzle]
+            
+            return {
+                "puzzle": puzzle,
+                "source": "test_data",
+                "index": idx,
+                "status": "success"
+            }
+        
+        else:
+            raise HTTPException(status_code=400, detail="Invalid source. Must be 'random' or 'test_data'")
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/test_data_files")
+async def list_test_data_files():
+    """List available test data .npy files in checkpoints directory"""
+    try:
+        data_dir = Path("/app/data")
+        if not data_dir.exists():
+            return {"files": [], "message": "Data directory not found"}
+        
+        npy_files = []
+        for npy_path in data_dir.rglob("*.npy"):
+            rel_path = npy_path.relative_to(data_dir)
+            
+            # Get file info
+            size_mb = npy_path.stat().st_size / (1024 * 1024)
+            
+            # Try to get array shape
+            try:
+                arr = np.load(npy_path, mmap_mode='r')
+                shape = arr.shape
+            except:
+                shape = "unknown"
+            
+            npy_files.append({
+                "name": npy_path.name,
+                "path": f"/app/data/{rel_path}",
+                "size_mb": round(size_mb, 2),
+                "shape": str(shape)
+            })
+        
+        return {
+            "files": npy_files,
+            "count": len(npy_files)
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.get("/api/models")
 async def list_available_models():
     """List all available models in the checkpoints directory"""

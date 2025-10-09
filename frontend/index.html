@@ -31,11 +31,38 @@
             </div>
             
             <div class="button-group">
+                <button id="generate-btn" class="btn">Generate New Puzzle</button>
                 <button id="reset-btn" class="btn">Reset Puzzle</button>
                 <button id="initialize-btn" class="btn btn-primary">Initialize Solver</button>
                 <button id="step-btn" class="btn btn-success" disabled>Solve One Step</button>
                 <button id="auto-solve-btn" class="btn btn-warning" disabled>Auto Solve</button>
                 <button id="stop-btn" class="btn btn-danger" disabled>Stop</button>
+            </div>
+            
+            <!-- Puzzle Generation Modal (hidden by default) -->
+            <div id="puzzle-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <h3>Generate New Puzzle</h3>
+                    <div class="input-group">
+                        <label>
+                            <input type="radio" name="puzzle-source" value="random" checked>
+                            Random Sudoku Puzzle
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label>
+                            <input type="radio" name="puzzle-source" value="test_data">
+                            Random from Test Data (.npy)
+                        </label>
+                        <select id="test-data-select" class="model-dropdown" disabled>
+                            <option value="">-- Select test data file --</option>
+                        </select>
+                    </div>
+                    <div class="button-group">
+                        <button id="confirm-generate-btn" class="btn btn-primary">Generate</button>
+                        <button id="cancel-generate-btn" class="btn">Cancel</button>
+                    </div>
+                </div>
             </div>
             
             <div class="status">

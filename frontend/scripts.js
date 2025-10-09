@@ -28,6 +28,7 @@ let currentPuzzle = JSON.parse(JSON.stringify(initialPuzzle));
 const sudokuGrid = document.getElementById('sudoku-grid');
 const checkpointInput = document.getElementById('checkpoint-path');
 const modelSelect = document.getElementById('model-select');
+const generateBtn = document.getElementById('generate-btn');
 const resetBtn = document.getElementById('reset-btn');
 const initializeBtn = document.getElementById('initialize-btn');
 const stepBtn = document.getElementById('step-btn');
@@ -36,6 +37,19 @@ const stopBtn = document.getElementById('stop-btn');
 const statusText = document.getElementById('status-text');
 const stepCount = document.getElementById('step-count');
 const sessionIdSpan = document.getElementById('session-id');
+
+// Modal elements
+const puzzleModal = document.getElementById('puzzle-modal');
+const confirmGenerateBtn = document.getElementById('confirm-generate-btn');
+const cancelGenerateBtn = document.getElementById('cancel-generate-btn');
+const testDataSelect = document.getElementById('test-data-select');
+
+// Radio button handling
+document.querySelectorAll('input[name="puzzle-source"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        testDataSelect.disabled = e.target.value !== 'test_data';
+    });
+});
 
 // Model selection handler
 modelSelect.addEventListener('change', (e) => {
@@ -265,11 +279,113 @@ function resetPuzzle() {
 }
 
 // Event Listeners
+generateBtn.addEventListener('click', openGenerateModal);
+cancelGenerateBtn.addEventListener('click', closeGenerateModal);
+confirmGenerateBtn.addEventListener('click', generateNewPuzzle);
 resetBtn.addEventListener('click', resetPuzzle);
 initializeBtn.addEventListener('click', initializeSolver);
 stepBtn.addEventListener('click', solveStep);
 autoSolveBtn.addEventListener('click', autoSolve);
 stopBtn.addEventListener('click', stopAutoSolve);
+
+// Generate puzzle functions
+async function openGenerateModal() {
+    puzzleModal.style.display = 'flex';
+    await loadTestDataFiles();
+}
+
+function closeGenerateModal() {
+    puzzleModal.style.display = 'none';
+}
+
+async function loadTestDataFiles() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/test_data_files`);
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        
+        if (data.files && data.files.length > 0) {
+            testDataSelect.innerHTML = '<option value="">-- Select test data file --</option>';
+            data.files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.path;
+                option.textContent = `${file.name} (${file.size_mb}MB, shape: ${file.shape})`;
+                testDataSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading test data files:', error);
+    }
+}
+
+async function generateNewPuzzle() {
+    try {
+        updateStatus('Generating puzzle...');
+        
+        const source = document.querySelector('input[name="puzzle-source"]:checked').value;
+        const requestBody = { source };
+        
+        if (source === 'test_data') {
+            const testDataPath = testDataSelect.value;
+            if (!testDataPath) {
+                alert('Please select a test data file');
+                return;
+            }
+            requestBody.test_data_path = testDataPath;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/api/generate_puzzle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update initial puzzle (this becomes the new "reset" state)
+        for (let i = 0; i < 9; i++) {
+            for (let j = 0; j < 9; j++) {
+                initialPuzzle[i][j] = data.puzzle[i][j];
+            }
+        }
+        
+        // Reset and display new puzzle
+        currentPuzzle = JSON.parse(JSON.stringify(initialPuzzle));
+        createSudokuGrid(currentPuzzle);
+        
+        // Clear session
+        if (currentSessionId) {
+            fetch(`${API_BASE_URL}/api/session/${currentSessionId}`, {
+                method: 'DELETE'
+            }).catch(console.error);
+        }
+        
+        currentSessionId = null;
+        autoSolving = false;
+        currentStep = 0;
+        
+        sessionIdSpan.textContent = 'None';
+        stepCount.textContent = '0';
+        stepBtn.disabled = true;
+        autoSolveBtn.disabled = true;
+        stopBtn.disabled = true;
+        
+        updateStatus(`New puzzle generated from ${data.source}`);
+        closeGenerateModal();
+        
+    } catch (error) {
+        console.error('Error generating puzzle:', error);
+        alert('Failed to generate puzzle: ' + error.message);
+        updateStatus('Error');
+    }
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
