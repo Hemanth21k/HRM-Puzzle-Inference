@@ -360,7 +360,7 @@ async function generateNewPuzzle() {
         currentPuzzle = JSON.parse(JSON.stringify(initialPuzzle));
         createSudokuGrid(currentPuzzle);
         
-        // Clear session
+        // Clear OLD session
         if (currentSessionId) {
             fetch(`${API_BASE_URL}/api/session/${currentSessionId}`, {
                 method: 'DELETE'
@@ -373,17 +373,57 @@ async function generateNewPuzzle() {
         
         sessionIdSpan.textContent = 'None';
         stepCount.textContent = '0';
+        
+        closeGenerateModal();
+        
+        // NEW: Auto-initialize if checkpoint path is set
+        const checkpointPath = checkpointInput.value.trim();
+        if (checkpointPath) {
+            updateStatus('Auto-initializing solver with new puzzle...');
+            
+            // Add a small delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Initialize automatically
+            const initResponse = await fetch(`${API_BASE_URL}/api/initialize`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    puzzle: currentPuzzle,
+                    checkpoint_path: checkpointPath
+                })
+            });
+            
+            if (!initResponse.ok) {
+                throw new Error(`Failed to initialize: ${initResponse.status}`);
+            }
+            
+            const initData = await initResponse.json();
+            currentSessionId = initData.session_id;
+            sessionIdSpan.textContent = currentSessionId.substring(0, 10) + '...';
+            
+            updateStatus(`New puzzle generated and initialized from ${data.source}`, 0);
+            stepBtn.disabled = false;
+            autoSolveBtn.disabled = false;
+        } else {
+            // No checkpoint set, require manual initialization
+            updateStatus(`New puzzle generated from ${data.source} - Click Initialize to solve`);
+            stepBtn.disabled = true;
+            autoSolveBtn.disabled = true;
+            stopBtn.disabled = true;
+        }
+        
+    } catch (error) {
+        console.error('Error generating/initializing puzzle:', error);
+        alert('Failed to generate puzzle: ' + error.message);
+        updateStatus('Error');
+        
+        // Reset button states on error
         stepBtn.disabled = true;
         autoSolveBtn.disabled = true;
         stopBtn.disabled = true;
-        
-        updateStatus(`New puzzle generated from ${data.source}`);
-        closeGenerateModal();
-        
-    } catch (error) {
-        console.error('Error generating puzzle:', error);
-        alert('Failed to generate puzzle: ' + error.message);
-        updateStatus('Error');
     }
 }
 
