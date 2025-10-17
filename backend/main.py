@@ -7,8 +7,10 @@ import os
 import torch
 import asyncio
 import numpy as np
+import uuid  # ADD THIS IMPORT
 from pathlib import Path
 from pretrain import PretrainConfig, init_train_state, create_dataloader
+
 app = FastAPI()
 
 # Enable CORS for frontend communication
@@ -89,15 +91,17 @@ async def initialize_solver(request: SudokuRequest):
         batch = {
             "inputs": puzzle_tensor,
             "labels": puzzle_tensor.clone(),  # Placeholder
-            "puzzle_identifiers": torch.zeros(1, dtype=torch.long).cuda(),  # Add this line
+            "puzzle_identifiers": torch.zeros(1, dtype=torch.long).cuda(),
         }
         
         # Initialize carry
         with torch.device("cuda"):
             carry = model_state.model.initial_carry(batch)
         
+        # Generate UNIQUE session ID using UUID
+        session_id = str(uuid.uuid4())
+        
         # Store session
-        session_id = str(hash(str(request.puzzle)))
         solving_sessions[session_id] = {
             "carry": carry,
             "batch": batch,
@@ -131,7 +135,6 @@ async def solve_step(session_id: str):
             }
         
         with torch.inference_mode():
-            # print("batch:",session["batch"])
             carry, _, metrics, preds, all_finish = model_state.model(
                 carry=session["carry"],
                 batch=session["batch"],
@@ -141,10 +144,8 @@ async def solve_step(session_id: str):
             
             # Get predictions
             pred_outs = torch.argmax(preds["logits"], dim=-1)
-            print("pred outs:", pred_outs)
-            print("all finish:", all_finish)
             current_grid = (pred_outs[0].reshape(9, 9) - 1).cpu().tolist()
-            
+            print(f"Session:{session_id[:8]} pred_out: {pred_outs}")
             # Update session
             session["carry"] = carry
             session["step"] += 1
@@ -189,7 +190,8 @@ async def delete_session(session_id: str):
 async def health_check():
     return {
         "status": "healthy",
-        "model_loaded": model_state is not None
+        "model_loaded": model_state is not None,
+        "active_sessions": len(solving_sessions)  # ADD THIS
     }
 
 def generate_random_sudoku():
@@ -255,7 +257,7 @@ async def generate_puzzle(request: GeneratePuzzleRequest):
             # Get random sample
             import random
             idx = random.randint(0, len(test_data.data) - 1)
-            puzzle_array = test_data.data[idx]
+            puzzle_array = test_data.data[idx] - 1  # Assuming data is 1-indexed
             
             # Convert to list format (assuming it's 9x9)
             if puzzle_array.shape == (81,):
@@ -361,3 +363,12 @@ async def list_available_models():
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# NEW: Add endpoint to check active sessions
+@app.get("/api/sessions")
+async def list_sessions():
+    """List all active sessions (for debugging)"""
+    return {
+        "active_sessions": list(solving_sessions.keys()),
+        "count": len(solving_sessions)
+    }
